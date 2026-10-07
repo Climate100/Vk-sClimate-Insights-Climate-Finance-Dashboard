@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Climate Finance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1A1C;
+    --surface:#132528;
+    --surface-2:#1A2E31;
+    --line: rgba(240,235,221,0.10);
+    --line-strong: rgba(240,235,221,0.18);
+    --bone:#F0EAD9;
+    --muted:#93A8A5;
+    --muted-2:#6E8482;
+    --gold:#E8B14D;
+    --gold-dim: rgba(232,177,77,0.16);
+    --teal:#5AB08C;
+    --teal-dim: rgba(90,176,140,0.16);
+    --rose:#C97A6D;
+    --focus: #E8B14D;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ink:#0D1A1C; --surface:#132528; --surface-2:#1A2E31; --bone:#F0EAD9; --muted:#93A8A5;
+    }
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--bone);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+  }
+  a{color:var(--gold);}
+  ::selection{background:var(--gold-dim);}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .serif{font-family:'Fraunces', serif;}
+
+  /* ---------- Masthead ---------- */
+  header.masthead{
+    padding: 30px 28px 26px;
+    border-bottom:1px solid var(--line);
+    display:flex; flex-wrap:wrap; gap:24px; justify-content:space-between; align-items:flex-end;
+    background:
+      radial-gradient(1100px 380px at 12% -20%, rgba(232,177,77,0.10), transparent 60%),
+      radial-gradient(900px 320px at 100% -30%, rgba(90,176,140,0.10), transparent 60%);
+  }
+  .brand{max-width:640px;}
+  .brand .kicker{
+    color:var(--teal); font-size:13px; letter-spacing:0.02em; margin:0 0 10px;
+  }
+  .brand h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size:clamp(28px,4vw,42px);
+    line-height:1.05; margin:0 0 10px; letter-spacing:-0.01em;
+  }
+  .brand p{ margin:0; color:var(--muted); font-size:15px; line-height:1.55; max-width:56ch;}
+  .headline-stats{display:flex; gap:26px; flex-wrap:wrap;}
+  .stat{min-width:130px;}
+  .stat .num{font-family:'Fraunces', serif; font-weight:600; font-size:30px; color:var(--gold); line-height:1;}
+  .stat .lbl{font-size:12.5px; color:var(--muted-2); margin-top:6px; line-height:1.4; max-width:16ch;}
+
+  /* ---------- Filters ---------- */
+  .filterbar{
+    position:sticky; top:0; z-index:30;
+    background:rgba(13,26,28,0.92); backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:14px 28px;
+    display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+  }
+  .filterbar .fgroup{display:flex; flex-direction:column; gap:5px;}
+  .filterbar label{font-size:11.5px; color:var(--muted-2);}
+  .filterbar select, .filterbar input[type="search"]{
+    background:var(--surface-2); color:var(--bone); border:1px solid var(--line-strong);
+    border-radius:7px; padding:8px 10px; font-size:13.5px; font-family:inherit; min-width:150px;
+  }
+  .filterbar select:focus, .filterbar input:focus, button:focus-visible, .tab:focus-visible{
+    outline:2px solid var(--focus); outline-offset:2px;
+  }
+  .filterbar input[type="search"]{min-width:220px;}
+  .clearbtn{
+    align-self:flex-end; background:transparent; color:var(--muted); border:1px solid var(--line-strong);
+    border-radius:7px; padding:8px 12px; font-size:13px; cursor:pointer; font-family:inherit;
+  }
+  .clearbtn:hover{color:var(--bone); border-color:var(--gold);}
+  .countpill{
+    margin-left:auto; font-size:12.5px; color:var(--muted); align-self:flex-end; padding-bottom:9px;
+  }
+  .countpill strong{color:var(--gold);}
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex; gap:2px; padding:0 28px; border-bottom:1px solid var(--line);
+    background:var(--ink); overflow-x:auto;
+  }
+  .tab{
+    background:transparent; border:none; color:var(--muted); font-family:'Fraunces', serif;
+    font-size:16px; padding:15px 18px 13px; cursor:pointer; border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  .tab:hover{color:var(--bone);}
+  .tab.active{color:var(--bone); border-bottom-color:var(--gold);}
+
+  main{padding:26px 28px 70px; max-width:1320px; margin:0 auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .section-intro{max-width:78ch; margin:0 0 22px;}
+  .section-intro h2{font-family:'Fraunces',serif; font-weight:600; font-size:22px; margin:0 0 8px;}
+  .section-intro p{color:var(--muted); font-size:14.5px; line-height:1.6; margin:0;}
+
+  /* ---------- Initiative cards ---------- */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:14px;}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .card .top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+  .card h3{font-family:'Fraunces',serif; font-weight:600; font-size:17px; margin:0; line-height:1.25;}
+  .badge{
+    font-size:11px; padding:3px 8px; border-radius:20px; white-space:nowrap; border:1px solid var(--line-strong);
+    color:var(--muted);
+  }
+  .badge.mit{background:var(--teal-dim); color:var(--teal); border-color:transparent;}
+  .badge.ada{background:var(--gold-dim); color:var(--gold); border-color:transparent;}
+  .badge.both{background:rgba(90,176,140,0.12); color:var(--bone); border-color:var(--line-strong);}
+  .badge.lad{background:rgba(201,122,109,0.18); color:var(--rose); border-color:transparent;}
+  .card .meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-size:12px; color:var(--muted-2);}
+  .card .meta span{display:inline-flex; align-items:center; gap:5px;}
+  .card p.desc{font-size:13.5px; color:var(--muted); line-height:1.55; margin:0;}
+  .card .foot{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; border-top:1px solid var(--line);}
+  .card .scale{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--gold);}
+  .card a.link{font-size:12.5px; text-decoration:none; border-bottom:1px solid var(--gold-dim);}
+  .card a.link:hover{border-bottom-color:var(--gold);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:5px;}
+  .chip{font-size:11.5px; padding:2px 8px; border-radius:4px; background:var(--surface-2); color:var(--muted); border:1px solid var(--line);}
+  .chip.hit{color:var(--ink); background:var(--gold); border-color:var(--gold);}
+  .chips-note{font-size:11px; color:var(--muted-2); margin-bottom:4px;}
+  .empty{padding:50px 20px; text-align:center; color:var(--muted-2); font-size:14px;}
+
+  /* ---------- Areas tab ---------- */
+  .areas-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px;}
+  .area-card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; position:relative; overflow:hidden;}
+  .area-card .num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted-2); margin-bottom:10px;}
+  .area-card h3{font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin:0 0 8px;}
+  .area-card p{font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 12px;}
+  .area-card .barwrap{margin-top:10px;}
+  .area-card .barlabel{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted-2); margin-bottom:5px;}
+  .area-card .bar{height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
+  .area-card .bar > i{display:block; height:100%; background:linear-gradient(90deg, var(--teal), var(--gold));}
+  .area-card ul{margin:10px 0 0; padding-left:18px; font-size:12.5px; color:var(--muted-2); line-height:1.7;}
+
+  /* ---------- Policies tab ---------- */
+  .policy-list{display:flex; flex-direction:column; gap:12px;}
+  .policy{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px;
+    display:grid; grid-template-columns:150px 1fr auto; gap:18px; align-items:start;
+  }
+  .policy .when{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--gold);}
+  .policy .when .body{display:block; color:var(--muted-2); font-size:11.5px; margin-top:3px;}
+  .policy h3{font-family:'Fraunces',serif; font-size:17px; font-weight:600; margin:0 0 6px;}
+  .policy p{font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 8px;}
+  .policy .tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .status{font-size:11px; padding:3px 9px; border-radius:20px; border:1px solid var(--line-strong); color:var(--muted); white-space:nowrap; height:fit-content;}
+  .status.inforce{color:var(--teal); border-color:transparent; background:var(--teal-dim);}
+  .status.rolled{color:var(--rose); border-color:transparent; background:rgba(201,122,109,0.18);}
+  .status.progress{color:var(--gold); border-color:transparent; background:var(--gold-dim);}
+  .policy a.link{font-size:12.5px; text-decoration:none; border-bottom:1px solid var(--gold-dim); white-space:nowrap;}
+
+  /* ---------- Sources tab ---------- */
+  .source-groups{display:flex; flex-direction:column; gap:26px;}
+  .source-group h3{font-family:'Fraunces',serif; font-size:16px; font-weight:600; margin:0 0 12px; color:var(--teal);}
+  .source-table{width:100%; border-collapse:collapse;}
+  .source-table tr{border-top:1px solid var(--line);}
+  .source-table td{padding:11px 8px; font-size:13.5px; vertical-align:top;}
+  .source-table td.name{color:var(--bone); font-weight:500; width:26%;}
+  .source-table td.desc{color:var(--muted); width:48%; line-height:1.5;}
+  .source-table td.url a{font-size:12.5px; word-break:break-all;}
+  .source-table{overflow-x:auto; display:block;}
+
+  footer{padding:26px 28px 40px; border-top:1px solid var(--line); color:var(--muted-2); font-size:12px; max-width:1320px; margin:0 auto;}
+
+  @media (max-width:720px){
+    .policy{grid-template-columns:1fr; gap:8px;}
+    .policy .when{order:-1;}
+    header.masthead{padding:22px 18px;}
+    .filterbar, nav.tabs, main{padding-left:16px; padding-right:16px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <h1>Global Climate Finance Dashboard</h1>
+    <p>A browsable map of the multilateral funds, banks and partnerships moving capital toward mitigation and adaptation, the policy commitments that set their targets, and the areas of the economy competing for the money.</p>
+  </div>
+  <div class="headline-stats">
+    <div class="stat"><div class="num">$2.0T+</div><div class="lbl">tracked global climate finance, 2024 (est.)</div></div>
+    <div class="stat"><div class="num">$300B</div><div class="lbl">NCQG core public finance goal by 2035</div></div>
+    <div class="stat"><div class="num">$1.3T</div><div class="lbl">Baku-to-Belém full mobilisation target, 2035</div></div>
+  </div>
+</header>
+
+<div class="filterbar">
+  <div class="fgroup">
+    <label for="f-search">Search</label>
+    <input type="search" id="f-search" placeholder="Search name or keyword…">
+  </div>
+  <div class="fgroup">
+    <label for="f-region">Region</label>
+    <select id="f-region"><option value="">All regions</option></select>
+  </div>
+  <div class="fgroup">
+    <label for="f-country">Country</label>
+    <select id="f-country"><option value="">All countries</option></select>
+  </div>
+  <div class="fgroup init-only">
+    <label for="f-type">Institution type</label>
+    <select id="f-type"><option value="">All types</option></select>
+  </div>
+  <div class="fgroup init-only">
+    <label for="f-focus">Finance focus</label>
+    <select id="f-focus"><option value="">All focuses</option></select>
+  </div>
+  <div class="fgroup init-only">
+    <label for="f-status">Status</label>
+    <select id="f-status"><option value="">Any status</option></select>
+  </div>
+  <button class="clearbtn" id="clear-filters">Clear filters</button>
+  <div class="countpill" id="count-pill"></div>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="initiatives">Initiatives &amp; Funds</button>
+  <button class="tab" data-tab="areas">Areas of Climate Finance</button>
+  <button class="tab" data-tab="policies">Policies</button>
+  <button class="tab" data-tab="sources">Sources &amp; Links</button>
+</nav>
+
+<main>
+
+  <!-- INITIATIVES -->
+  <section class="panel active" id="panel-initiatives">
+    <div class="section-intro">
+      <h2>Initiatives &amp; funds</h2>
+      <p>Multilateral funds, development banks, and public-private partnerships that channel climate finance to countries and projects. Filter by region, institution type or finance focus above.</p>
+    </div>
+    <div class="grid" id="initiatives-grid"></div>
+    <p class="empty" id="initiatives-empty" style="display:none;">No initiatives match these filters. Try clearing one.</p>
+  </section>
+
+  <!-- AREAS -->
+  <section class="panel" id="panel-areas">
+    <div class="section-intro">
+      <h2>Areas of climate finance</h2>
+      <p>Climate finance is tracked by use, not just by source. These are the major destinations for the money — how much of the roughly $2 trillion tracked in 2024 leans toward each, and who typically funds it.</p>
+    </div>
+    <div class="areas-grid" id="areas-grid"></div>
+  </section>
+
+  <!-- POLICIES -->
+  <section class="panel" id="panel-policies">
+    <div class="section-intro">
+      <h2>Policies &amp; commitments</h2>
+      <p>The international agreements, national laws and standards that set climate-finance targets, rules, and disclosure requirements — from the Paris Agreement's finance article to the newest UN roadmap.</p>
+    </div>
+    <div class="policy-list" id="policies-list"></div>
+    <p class="empty" id="policies-empty" style="display:none;">No policies match these filters. Try clearing one.</p>
+  </section>
+
+  <!-- SOURCES -->
+  <section class="panel" id="panel-sources">
+    <div class="section-intro">
+      <h2>Sources &amp; links</h2>
+      <p>Primary sources behind this dashboard — trackers, official fund pages and reporting bodies — grouped by what they cover. Open any link for the underlying data.</p>
+    </div>
+    <div class="source-groups" id="sources-groups"></div>
+  </section>
+
+</main>
+
+<footer>
+  Compiled from public sources listed in the Sources &amp; Links tab, current as of September 2026. Figures for pledges, AUM and flows are approximate and change frequently — check the linked source for the latest number. This dashboard is a reference aid, not investment or legal advice.
+</footer>
+
+<script>
+/* ============ DATA ============ */
+const INITIATIVES = [
+  {name:"Green Climate Fund (GCF)", type:"Multilateral fund", region:"Global", focus:"Both", status:"Active",
+   established:2010, scale:"~$20B+ pledged (GCF-2)", 
+   desc:"The largest dedicated multilateral climate fund under the UNFCCC, financing mitigation and adaptation projects in developing countries via accredited national, regional and international entities.",
+   link:"https://www.greenclimate.fund"},
+  {name:"Global Environment Facility (GEF)", type:"Multilateral fund", region:"Global", focus:"Both", status:"Active",
+   established:1992, scale:"~$5.3B (GEF-8, 2022–26)",
+   desc:"Finances projects across climate, biodiversity, land degradation and chemicals under several UN conventions; administers the LDCF and SCCF on behalf of the UNFCCC.",
+   link:"https://www.thegef.org"},
+  {name:"Adaptation Fund", type:"Multilateral fund", region:"Global", focus:"Adaptation", status:"Active",
+   established:2001, scale:"~$1.3B pledged to date",
+   desc:"Established under the Kyoto Protocol and now serving the Paris Agreement, it finances concrete adaptation projects in vulnerable developing countries and pioneered direct access for national implementing entities.",
+   link:"https://www.adaptation-fund.org"},
+  {name:"Fund for Responding to Loss and Damage (FRLD)", type:"Multilateral fund", region:"Global", focus:"Loss & Damage", status:"Active",
+   established:2023, scale:"~$770M pledged (initial)",
+   desc:"Agreed at COP27 (2022) and operationalised at COP28 (2023) to help vulnerable countries cope with unavoidable climate impacts; hosted on an interim basis by the World Bank, board based in Manila.",
+   link:"https://unfccc.int/loss-and-damage-fund-and-funding-arrangements"},
+  {name:"Climate Investment Funds (CIF)", type:"Multilateral fund", region:"Global", focus:"Both", status:"Active",
+   established:2008, scale:"~$12B in commitments",
+   desc:"Housed at the World Bank, CIF runs programmes such as the Clean Technology Fund and Pilot Program for Climate Resilience, and in 2025 issued a first-of-its-kind capital markets bond to expand concessional lending.",
+   link:"https://www.cif.org"},
+  {name:"Least Developed Countries Fund (LDCF)", type:"Multilateral fund", region:"Africa, Asia, LAC", focus:"Adaptation", status:"Active",
+   established:2001, scale:"~$1.9B pledged to date",
+   desc:"GEF-administered fund financing National Adaptation Programmes of Action and adaptation priorities specifically for the 45 UN-designated least developed countries.",
+   link:"https://www.thegef.org/what-we-do/topics/least-developed-countries-fund-ldcf"},
+  {name:"Special Climate Change Fund (SCCF)", type:"Multilateral fund", region:"Global", focus:"Both", status:"Active",
+   established:2001, scale:"~$400M pledged to date",
+   desc:"GEF-administered fund supporting adaptation, technology transfer, and economic diversification in developing countries beyond LDCs.",
+   link:"https://www.thegef.org/what-we-do/topics/special-climate-change-fund-sccf"},
+  {name:"New Development Bank (NDB)", type:"Multilateral development bank", region:"Global (BRICS+)", focus:"Both", status:"Active",
+   established:2014, scale:"Targets 40% of lending to climate",
+   desc:"Founded by Brazil, Russia, India, China and South Africa, the NDB finances infrastructure and sustainable development projects across member and partner countries, with a rising share earmarked for climate.",
+   link:"https://www.ndb.int"},
+  {name:"Asian Infrastructure Investment Bank (AIIB)", type:"Multilateral development bank", region:"Asia", focus:"Both", status:"Active",
+   established:2016, scale:"Target: 50% of financing climate-related",
+   desc:"Beijing-headquartered MDB that has committed to align all financing with the Paris Agreement and directs at least half its approved financing to climate-related investments.",
+   link:"https://www.aiib.org"},
+  {name:"World Bank Group Climate Finance / MIGA Guarantee Platform", type:"Multilateral development bank", region:"Global", focus:"Both", status:"Active",
+   established:2024, scale:"Consolidates 50+ green guarantee tools",
+   desc:"The Bank Group's evolving climate finance push, including a Guarantee Platform that consolidates products at MIGA to free up capital for climate lending and crowd in private investment.",
+   link:"https://www.worldbank.org/en/topic/climatefinance"},
+  {name:"Partnering for Green Growth and the Global Goals (P4G)", type:"Public-private partnership", region:"Multi-region", focus:"Mitigation", status:"Active",
+   established:2018, scale:"Grants + technical assistance",
+   desc:"Hosted by the World Resources Institute and funded by Denmark, the Netherlands and South Korea, P4G gives grants and technical assistance to early-stage climate startups in emerging markets including Colombia, Ethiopia, Indonesia, Kenya, South Africa and Vietnam.",
+   link:"https://p4gpartnerships.org"},
+  {name:"City Climate Finance Gap Fund", type:"Public-private partnership", region:"Global (urban)", focus:"Mitigation", status:"Active",
+   established:2020, scale:"Project-preparation grants",
+   desc:"Sponsored by Germany and Luxembourg and implemented by the World Bank and European Investment Bank, it helps cities prepare bankable low-carbon infrastructure projects, launched at the 2019 UN Climate Action Summit.",
+   link:"https://www.citygapfund.org"},
+  {name:"Just Energy Transition Partnerships (JETPs)", type:"Bilateral / plurilateral partnership", region:"Africa, Asia", focus:"Mitigation", status:"Active",
+   established:2021, scale:"$8.5B–$20B per country package",
+   desc:"Country-specific pledges (South Africa, Indonesia, Vietnam, Senegal) from wealthy-nation coalitions to help coal-dependent economies retire fossil generation and scale renewables while protecting affected workers.",
+   link:"https://www.energetics.com.au/insights/just-energy-transition-partnerships"},
+  {name:"EU Innovation Fund", type:"Regional/national programme", region:"Europe", focus:"Mitigation", status:"Active",
+   established:2020, scale:"~€40B through 2030 (ETS-funded)",
+   desc:"Funded by EU Emissions Trading System revenues, it backs large-scale demonstration of low-carbon technologies in energy-intensive industry, hydrogen, carbon capture and renewables across the EU.",
+   link:"https://climate.ec.europa.eu/eu-action/eu-funding-climate-action/innovation-fund_en"},
+  {name:"Bezos Earth Fund", type:"Philanthropic", region:"Global", focus:"Both", status:"Active",
+   established:2020, scale:"$10B pledged through 2030",
+   desc:"A philanthropic commitment funding grants across climate and nature, including finance for methane reduction, food systems, climate policy and clean-energy access in developing regions.",
+   link:"https://www.bezosearthfund.org"},
+  {name:"Climate Policy Initiative — Global Landscape of Climate Finance", type:"Tracking initiative", region:"Global", focus:"Both", status:"Active",
+   established:2011, scale:"Tracks ~$2T annually",
+   desc:"Not a fund itself, but the most widely cited independent tracker of global climate finance flows by source, instrument, sector and region — the dataset underpinning most figures on this dashboard.",
+   link:"https://www.climatepolicyinitiative.org/global-landscape-of-climate-finance/"},
+  {name:"Glasgow Financial Alliance for Net Zero (GFANZ)", type:"Private-sector alliance", region:"Global", focus:"Mitigation", status:"Active",
+   established:2021, scale:"Coalition of finance institutions",
+   desc:"A coalition of banks, insurers and asset managers coordinating private-sector net-zero commitments and trying to unlock private capital for the transition, particularly in emerging markets.",
+   link:"https://www.gfanzero.com"}
+];
+
+const AREAS = [
+  {name:"Energy systems", share:"~47% of mitigation finance", desc:"Renewable generation, grid expansion and storage — the single largest destination for tracked climate finance, dominated by solar and wind.", who:["Multilateral development banks","Private project finance","Green bonds"]},
+  {name:"Transport", share:"~29% of mitigation finance", desc:"Electric vehicles, charging infrastructure and low-carbon public transit, increasingly financed through household and consumer spending as EV costs fall.", who:["Domestic private capital","Manufacturer & consumer finance","National subsidy schemes"]},
+  {name:"Buildings", share:"~19% of mitigation finance", desc:"Efficiency retrofits, heat pumps and building codes; together with energy and transport, these three sectors absorb roughly 95% of all mitigation finance.", who:["Household investment","Green mortgages","Utility rebate programmes"]},
+  {name:"Adaptation & resilience", share:"~$64B tracked (2024, plateaued)", desc:"Climate-proofing infrastructure, early-warning systems, and resilient agriculture — chronically underfunded relative to estimated need of $215–387B a year.", who:["Adaptation Fund, LDCF","Bilateral aid","National adaptation plans"]},
+  {name:"Loss & damage", share:"~$770M pledged (fund launch)", desc:"Support for communities already absorbing unavoidable climate impacts — floods, sea-level rise, slow-onset events — distinct from prevention or adaptation spending.", who:["Fund for Responding to Loss and Damage","Humanitarian budgets","Sovereign risk insurance"]},
+  {name:"Nature-based solutions & AFOLU", share:"Small, volatile share", desc:"Forests, land use, agriculture and ecosystem restoration receive disproportionately little finance relative to their abatement and resilience potential, reflecting weaker revenue models.", who:["GEF","Carbon markets","Philanthropic capital"]},
+  {name:"Just transition", share:"$8.5B–$20B per JETP", desc:"Financing to retire fossil-fuel infrastructure and retrain or protect affected workers and communities as economies decarbonise, formalised through country partnerships.", who:["JETP donor coalitions","National just-transition funds"]},
+  {name:"Blended finance & guarantees", share:"50+ guarantee structures globally", desc:"Public and concessional capital used to de-risk private investment — guarantees, first-loss tranches and structured funds designed to crowd in commercial capital at scale.", who:["MIGA Guarantee Platform","CIF Capital Markets Mechanism","DFIs"]},
+  {name:"Carbon markets", share:"Growing, uneven pricing", desc:"Compliance and voluntary carbon pricing and offset markets, from the EU ETS to Article 6 cooperative approaches, used both to raise revenue and shift investment incentives.", who:["EU ETS / Innovation Fund","Article 6 mechanisms","Voluntary registries"]},
+  {name:"Climate risk disclosure & standards", share:"Governance layer, not direct flows", desc:"Frameworks like ISSB's climate standard shape how finance is measured and allocated by requiring companies and investors to disclose climate-related financial risk.", who:["ISSB / IFRS S2","National regulators","GFANZ member institutions"]}
+];
+
+const POLICIES = [
+  {name:"Paris Agreement — Article 9 (Finance)", body:"UNFCCC", year:"2015", status:"inforce", statusLabel:"In force",
+   desc:"The treaty article obligating developed countries to provide financial resources to assist developing countries with both mitigation and adaptation, and encouraging voluntary contributions from other Parties.",
+   link:"https://unfccc.int/process-and-meetings/the-paris-agreement"},
+  {name:"$100 billion goal (Copenhagen Accord)", body:"UNFCCC", year:"2009 → met 2022", status:"inforce", statusLabel:"Superseded by NCQG",
+   desc:"Developed countries' original pledge to jointly mobilise $100B a year for developing countries by 2020; OECD data indicates the goal was first met in 2022, two years late.",
+   link:"https://unfccc.int/topics/climate-finance"},
+  {name:"New Collective Quantified Goal (NCQG) — Baku Finance Goal", body:"COP29, Baku", year:"2024", status:"inforce", statusLabel:"In force",
+   desc:"Agreed at COP29, it triples the public finance floor to $300B a year for developing countries by 2035, within a broader call to mobilise $1.3T annually from all public and private sources.",
+   link:"https://unfccc.int/cop29"},
+  {name:"Baku to Belém Roadmap to 1.3T", body:"COP29 & COP30 Presidencies", year:"2025", status:"progress", statusLabel:"Being implemented",
+   desc:"A non-binding blueprint released at COP30 setting out five action areas (the '5Rs': replenishing, rebalancing, redirecting, revamping, reshaping) to align existing institutions toward the $1.3T-a-year target by 2035.",
+   link:"https://cop30.br/en/2026-priorities/baku-to-belem-to-1-3t-roadmap"},
+  {name:"Loss and Damage Fund governance decision", body:"COP27 → COP28", year:"2022–2023", status:"inforce", statusLabel:"Operational",
+   desc:"COP27 agreed to establish a dedicated loss-and-damage fund; COP28 operationalised it with interim World Bank hosting and an independent secretariat based in the Philippines.",
+   link:"https://unfccc.int/loss-and-damage-fund-and-funding-arrangements"},
+  {name:"EU Green Deal & Sustainable Finance Taxonomy", body:"European Union", year:"2020", status:"inforce", statusLabel:"In force",
+   desc:"The EU's growth strategy for a climate-neutral economy by 2050, underpinned by a taxonomy classifying which economic activities count as environmentally sustainable for investment purposes.",
+   link:"https://climate.ec.europa.eu/eu-action/european-green-deal_en"},
+  {name:"EU Carbon Border Adjustment Mechanism (CBAM)", body:"European Union", year:"2023 (phasing in)", status:"progress", statusLabel:"Phasing in",
+   desc:"A carbon tariff on imports of cement, steel, aluminium, fertiliser, electricity and hydrogen, intended to prevent carbon leakage and indirectly reshape investment toward lower-carbon production.",
+   link:"https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en"},
+  {name:"Inflation Reduction Act (IRA)", body:"United States", year:"2022", status:"rolled", statusLabel:"Being rolled back",
+   desc:"A roughly $370B package of tax credits for renewables, EVs and efficiency — the largest US climate investment on record. Much of it is now being wound down years early under the 2025 'One Big Beautiful Bill Act.'",
+   link:"https://www.irs.gov/credits-and-deductions/inflation-reduction-act-of-2022"},
+  {name:"One Big Beautiful Bill Act — energy provisions", body:"United States", year:"2025", status:"inforce", statusLabel:"In force",
+   desc:"Signed July 2025, it terminates or accelerates the phase-out of IRA clean-electricity, EV and home-efficiency tax credits, marking a major reversal of federal US climate-finance incentives.",
+   link:"https://www.congress.gov"},
+  {name:"India National Solar Mission & Green Hydrogen Mission", body:"India", year:"2010 / 2023", status:"inforce", statusLabel:"In force",
+   desc:"Flagship national programmes driving India's solar capacity build-out and a domestic green hydrogen industry, cited by CPI as an example of policy signals coinciding with large-scale private investment.",
+   link:"https://mnre.gov.in"},
+  {name:"China's dual-carbon targets", body:"China", year:"2020", status:"inforce", statusLabel:"In force",
+   desc:"National commitment to peak carbon emissions before 2030 and reach carbon neutrality by 2060, driving state-directed investment that has made clean-energy technology over 10% of China's economy.",
+   link:"https://unfccc.int/news/china-s-new-ndc"},
+  {name:"ISSB Climate Disclosure Standard (IFRS S2)", body:"International Sustainability Standards Board", year:"2023", status:"progress", statusLabel:"Adopting jurisdictions growing",
+   desc:"A global baseline for corporate climate-related financial disclosure, increasingly referenced or mandated by national regulators to standardise how climate risk informs investment decisions.",
+   link:"https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/ifrs-s2-climate-related-disclosures/"}
+];
+
+const SOURCE_GROUPS = [
+  {title:"Multilateral funds & institutions", items:[
+    {name:"Green Climate Fund", desc:"Official fund site — projects, board decisions, pledges.", url:"https://www.greenclimate.fund"},
+    {name:"Global Environment Facility", desc:"GEF replenishment data and project portfolio.", url:"https://www.thegef.org"},
+    {name:"Adaptation Fund", desc:"Direct-access adaptation project database.", url:"https://www.adaptation-fund.org"},
+    {name:"Climate Investment Funds", desc:"CIF programme structure and capital markets activity.", url:"https://www.cif.org"},
+    {name:"UNFCCC — Loss and Damage Fund", desc:"Governance and funding-arrangement decisions.", url:"https://unfccc.int/loss-and-damage-fund-and-funding-arrangements"},
+    {name:"World Bank — Climate Finance", desc:"Bank Group climate finance strategy and MIGA guarantees.", url:"https://www.worldbank.org/en/topic/climatefinance"}
+  ]},
+  {title:"Trackers & landscape reports", items:[
+    {name:"CPI — Global Landscape of Climate Finance", desc:"The primary independent tracker of global climate finance flows cited throughout this dashboard.", url:"https://www.climatepolicyinitiative.org/global-landscape-of-climate-finance/"},
+    {name:"Climate Funds Update", desc:"Independent database of multilateral climate fund pledges and disbursements.", url:"https://climatefundsupdate.org/the-funds/"},
+    {name:"UNFCCC — Climate Finance topic page", desc:"Official UN climate finance resources, including funding announcements.", url:"https://unfccc.int/topics/climate-finance"},
+    {name:"OECD — Climate finance provided and mobilised", desc:"Tracks developed-country progress against the $100B / NCQG goals.", url:"https://www.oecd.org/en/topics/climate-finance.html"}
+  ]},
+  {title:"Policy & summit coverage", items:[
+    {name:"UNFCCC — Paris Agreement", desc:"Full treaty text, including Article 9 on finance.", url:"https://unfccc.int/process-and-meetings/the-paris-agreement"},
+    {name:"COP30 — Baku to Belém Roadmap", desc:"2026 priorities page tracking roadmap implementation.", url:"https://cop30.br/en/2026-priorities/baku-to-belem-to-1-3t-roadmap"},
+    {name:"European Commission — European Green Deal", desc:"EU climate policy and sustainable finance taxonomy.", url:"https://climate.ec.europa.eu/eu-action/european-green-deal_en"},
+    {name:"IFRS Foundation — ISSB Standards", desc:"IFRS S2 climate-related disclosure standard.", url:"https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/ifrs-s2-climate-related-disclosures/"}
+  ]},
+  {title:"Analysis & commentary", items:[
+    {name:"WRI — Opportunities for Sustainable Finance", desc:"Annual outlook on emerging climate-finance mechanisms and gaps.", url:"https://www.wri.org/technical-perspectives/6-opportunities-sustainable-finance-2026"},
+    {name:"NRDC — How to Deliver the New Climate Finance Goal", desc:"Modelling of pathways to the $300B NCQG target.", url:"https://www.nrdc.org/bio/joe-thwaites/how-deliver-new-climate-finance-goal"},
+    {name:"UNDP Climate Promise — Climate Finance", desc:"Country-level support and explainer resources on climate finance.", url:"https://climatepromise.undp.org/what-we-do/areas-of-work/climate-finance"}
+  ]}
+];
+
+/* ============ GEOGRAPHY ============ */
+const GEO = {
+ // initiatives
+ "Green Climate Fund (GCF)":{r:["Global"],c:[]},
+ "Global Environment Facility (GEF)":{r:["Global"],c:[]},
+ "Adaptation Fund":{r:["Global"],c:[]},
+ "Fund for Responding to Loss and Damage (FRLD)":{r:["Global"],c:["Philippines"],note:"Board seat: Manila"},
+ "Climate Investment Funds (CIF)":{r:["Global"],c:[]},
+ "Least Developed Countries Fund (LDCF)":{r:["Africa","Asia","Latin America & Caribbean","Oceania"],c:["Bangladesh","Ethiopia","Haiti","Kiribati","Mali","Nepal"],note:"Examples of eligible countries"},
+ "Special Climate Change Fund (SCCF)":{r:["Global"],c:[]},
+ "New Development Bank (NDB)":{r:["Asia","Africa","Latin America & Caribbean","Europe"],c:["Algeria","Bangladesh","Brazil","China","Egypt","India","Russia","South Africa","United Arab Emirates"],note:"Member countries"},
+ "Asian Infrastructure Investment Bank (AIIB)":{r:["Asia","Africa","Europe"],c:["Bangladesh","China","Egypt","India","Indonesia","Türkiye"],note:"Examples of borrowing members"},
+ "World Bank Group Climate Finance / MIGA Guarantee Platform":{r:["Global"],c:[]},
+ "Partnering for Green Growth and the Global Goals (P4G)":{r:["Africa","Asia","Latin America & Caribbean"],c:["Colombia","Ethiopia","Indonesia","Kenya","South Africa","Vietnam"]},
+ "City Climate Finance Gap Fund":{r:["Global"],c:["Germany","Luxembourg"],note:"Sponsors"},
+ "Just Energy Transition Partnerships (JETPs)":{r:["Africa","Asia"],c:["Indonesia","Senegal","South Africa","Vietnam"]},
+ "EU Innovation Fund":{r:["Europe"],c:["European Union (27 member states)"]},
+ "Bezos Earth Fund":{r:["Global"],c:[]},
+ "Climate Policy Initiative — Global Landscape of Climate Finance":{r:["Global"],c:[]},
+ "Glasgow Financial Alliance for Net Zero (GFANZ)":{r:["Global"],c:[]},
+ // policies
+ "Paris Agreement — Article 9 (Finance)":{r:["Global"],c:[]},
+ "$100 billion goal (Copenhagen Accord)":{r:["Global"],c:[]},
+ "New Collective Quantified Goal (NCQG) — Baku Finance Goal":{r:["Global"],c:["Azerbaijan"],note:"COP29 host"},
+ "Baku to Belém Roadmap to 1.3T":{r:["Global"],c:["Azerbaijan","Brazil"],note:"COP29 & COP30 hosts"},
+ "Loss and Damage Fund governance decision":{r:["Global"],c:["Philippines"],note:"Board seat: Manila"},
+ "EU Green Deal & Sustainable Finance Taxonomy":{r:["Europe"],c:["European Union (27 member states)"]},
+ "EU Carbon Border Adjustment Mechanism (CBAM)":{r:["Europe"],c:["European Union (27 member states)"]},
+ "Inflation Reduction Act (IRA)":{r:["North America"],c:["United States"]},
+ "One Big Beautiful Bill Act — energy provisions":{r:["North America"],c:["United States"]},
+ "India National Solar Mission & Green Hydrogen Mission":{r:["Asia"],c:["India"]},
+ "China's dual-carbon targets":{r:["Asia"],c:["China"]},
+ "ISSB Climate Disclosure Standard (IFRS S2)":{r:["Global"],c:[]}
+};
+[...INITIATIVES, ...POLICIES].forEach(x=>{
+  const g = GEO[x.name] || {r:["Global"],c:[]};
+  x.regions = g.r; x.countries = g.c; x.geoNote = g.note || "";
+});
+
+/* ============ FILTER STATE ============ */
+const regionSel = document.getElementById('f-region');
+const countrySel = document.getElementById('f-country');
+const typeSel = document.getElementById('f-type');
+const focusSel = document.getElementById('f-focus');
+const statusSel = document.getElementById('f-status');
+const searchInput = document.getElementById('f-search');
+const countPill = document.getElementById('count-pill');
+let activeTab = 'initiatives';
+
+function uniqueSorted(arr){ return [...new Set(arr)].sort((a,b)=>a.localeCompare(b)); }
+function addOpts(sel, vals){ vals.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o); }); }
+
+const ALL = [...INITIATIVES, ...POLICIES];
+addOpts(regionSel, uniqueSorted(ALL.flatMap(x=>x.regions)));
+addOpts(typeSel, uniqueSorted(INITIATIVES.map(i=>i.type)));
+addOpts(focusSel, uniqueSorted(INITIATIVES.map(i=>i.focus)));
+addOpts(statusSel, uniqueSorted(INITIATIVES.map(i=>i.status)));
+
+function refreshCountries(){
+  const r = regionSel.value;
+  const pool = ALL.filter(x=>!r || x.regions.includes(r));
+  const names = uniqueSorted(pool.flatMap(x=>x.countries));
+  const prev = countrySel.value;
+  countrySel.innerHTML = '<option value="">' + (r ? 'All countries in ' + r : 'All countries') + '</option>';
+  addOpts(countrySel, names);
+  countrySel.value = names.includes(prev) ? prev : "";
+}
+
+function chipsHTML(x){
+  if(!x.countries.length) return '';
+  const sel = countrySel.value;
+  return '<div>' + (x.geoNote ? '<div class="chips-note">'+x.geoNote+'</div>' : '') +
+    '<div class="chips">' + x.countries.map(c=>'<span class="chip'+(c===sel?' hit':'')+'">'+c+'</span>').join('') + '</div></div>';
+}
+
+function geoMatch(x){
+  const r = regionSel.value, c = countrySel.value;
+  if(r && !x.regions.includes(r)) return false;
+  if(c && !x.countries.includes(c)) return false;
+  return true;
+}
+
+/* ============ RENDER: INITIATIVES ============ */
+const grid = document.getElementById('initiatives-grid');
+const emptyMsg = document.getElementById('initiatives-empty');
+
+function focusBadgeClass(f){
+  if(f === "Mitigation") return "mit";
+  if(f === "Adaptation") return "ada";
+  if(f === "Loss & Damage") return "lad";
+  return "both";
+}
+
+function renderInitiatives(){
+  const q = searchInput.value.trim().toLowerCase();
+  const t = typeSel.value, f = focusSel.value, s = statusSel.value;
+  const list = INITIATIVES.filter(it=>{
+    if(!geoMatch(it)) return false;
+    if(t && it.type !== t) return false;
+    if(f && it.focus !== f) return false;
+    if(s && it.status !== s) return false;
+    if(q && !(it.name+" "+it.desc+" "+it.regions.join(" ")+" "+it.countries.join(" ")+" "+it.type).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  grid.innerHTML = "";
+  emptyMsg.style.display = list.length ? "none" : "block";
+  if(activeTab==='initiatives') countPill.innerHTML = "<strong>"+list.length+"</strong> of "+INITIATIVES.length+" initiatives";
+  list.forEach(it=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="top"><h3>${it.name}</h3><span class="badge ${focusBadgeClass(it.focus)}">${it.focus}</span></div>
+      <div class="meta"><span>${it.type}</span><span>·</span><span>${it.regions.join(", ")}</span><span>·</span><span>Est. ${it.established}</span></div>
+      ${chipsHTML(it)}
+      <p class="desc">${it.desc}</p>
+      <div class="foot"><span class="scale">${it.scale}</span><a class="link" href="${it.link}" target="_blank" rel="noopener">Visit site →</a></div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ============ RENDER: POLICIES ============ */
+const policiesList = document.getElementById('policies-list');
+const policiesEmpty = document.getElementById('policies-empty');
+function renderPolicies(){
+  const q = searchInput.value.trim().toLowerCase();
+  const list = POLICIES.filter(p=>{
+    if(!geoMatch(p)) return false;
+    if(q && !(p.name+" "+p.desc+" "+p.body+" "+p.regions.join(" ")+" "+p.countries.join(" ")).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  policiesList.innerHTML = "";
+  policiesEmpty.style.display = list.length ? "none" : "block";
+  if(activeTab==='policies') countPill.innerHTML = "<strong>"+list.length+"</strong> of "+POLICIES.length+" policies";
+  list.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'policy';
+    row.innerHTML = `
+      <div class="when mono">${p.year}<span class="body">${p.body}</span></div>
+      <div>
+        <h3>${p.name}</h3>
+        <p>${p.desc}</p>
+        <div class="tags"><span class="status ${p.status}">${p.statusLabel}</span><span class="badge">${p.regions.join(", ")}</span></div>
+        ${p.countries.length ? '<div style="margin-top:8px">'+chipsHTML(p)+'</div>' : ''}
+      </div>
+      <a class="link" href="${p.link}" target="_blank" rel="noopener">Source →</a>`;
+    policiesList.appendChild(row);
+  });
+}
+
+function applyFilters(){ renderInitiatives(); renderPolicies(); }
+
+regionSel.addEventListener('change', ()=>{ refreshCountries(); applyFilters(); });
+[countrySel, typeSel, focusSel, statusSel].forEach(el=> el.addEventListener('change', applyFilters));
+searchInput.addEventListener('input', applyFilters);
+document.getElementById('clear-filters').addEventListener('click', ()=>{
+  regionSel.value = ""; typeSel.value = ""; focusSel.value = ""; statusSel.value = ""; searchInput.value = "";
+  refreshCountries(); applyFilters();
+});
+refreshCountries(); applyFilters();
+
+/* ============ RENDER: AREAS ============ */
+const areasGrid = document.getElementById('areas-grid');
+AREAS.forEach((a, idx)=>{
+  const card = document.createElement('div');
+  card.className = 'area-card';
+  card.innerHTML = `
+    <h3>${a.name}</h3>
+    <p>${a.desc}</p>
+    <div class="barwrap">
+      <div class="barlabel"><span>Scale</span><span>${a.share}</span></div>
+    </div>
+    <ul>${a.who.map(w=>`<li>${w}</li>`).join('')}</ul>`;
+  areasGrid.appendChild(card);
+});
+
+/* ============ RENDER: SOURCES ============ */
+const sourcesGroups = document.getElementById('sources-groups');
+SOURCE_GROUPS.forEach(g=>{
+  const wrap = document.createElement('div');
+  wrap.className = 'source-group';
+  const rows = g.items.map(it => `
+    <tr>
+      <td class="name">${it.name}</td>
+      <td class="desc">${it.desc}</td>
+      <td class="url"><a href="${it.url}" target="_blank" rel="noopener">${it.url.replace('https://','')}</a></td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `<h3>${g.title}</h3><table class="source-table"><tbody>${rows}</tbody></table>`;
+  sourcesGroups.appendChild(wrap);
+});
+
+/* ============ TABS ============ */
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+const filterbar = document.querySelector('.filterbar');
+
+tabs.forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    panels.forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    activeTab = tab.dataset.tab;
+    document.getElementById('panel-' + activeTab).classList.add('active');
+    const geoTab = activeTab === 'initiatives' || activeTab === 'policies';
+    filterbar.style.display = geoTab ? 'flex' : 'none';
+    document.querySelectorAll('.init-only').forEach(el=> el.style.display = activeTab === 'initiatives' ? '' : 'none');
+    applyFilters();
+  });
+});
+</script>
+</body>
+</html>
